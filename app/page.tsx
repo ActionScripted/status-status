@@ -1,95 +1,101 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+
+import styles from "./page.module.css";
+
+import { useState, useEffect } from "react";
+
+const STATUS_URLS = {
+  statuspage: [
+    "https://confluence.status.atlassian.com/",
+    "https://jira-software.status.atlassian.com/",
+    "https://status.circleci.com/",
+    "https://status.duo.com/",
+    "https://status.fury.co/",
+    "https://status.npmjs.org/",
+    "https://status.python.org/",
+    "https://status.splashtop.com/",
+    "https://www.githubstatus.com/",
+    "https://lucidsoftware.statuspage.io/",
+    "https://status.hashicorp.com/",
+    "https://status.figma.com/",
+    "https://status.openai.com/",
+  ],
+};
+
+interface StatusPage {
+  page: {
+    name: string;
+    url: string;
+  };
+  status: {
+    indicator: "none" | "minor" | "major" | "critical";
+    description: string;
+  };
+}
+
+const Statuses: React.FC = () => {
+  const [statuses, setStatuses] = useState<StatusPage[]>([]);
+
+  useEffect(() => {
+    STATUS_URLS.statuspage.forEach((url) => {
+      fetch(url + "/api/v2/status.json")
+        .then((res) => res.json())
+        .then((result) => {
+          setStatuses((prevStatuses) => {
+            const updatedStatuses = [...prevStatuses, result];
+            updatedStatuses.sort((a, b) =>
+              a.page.name.localeCompare(b.page.name)
+            );
+            console.log(updatedStatuses);
+            return updatedStatuses;
+          });
+        })
+        .catch((err) => console.error(err));
+    });
+  }, []);
+
+  return (
+    <div>
+      <h1>Status Check</h1>
+      <ul>
+        {statuses.map((status, index) => (
+          <li
+            className={
+              styles.statuspage +
+              " " +
+              styles["status_" + status.status.indicator]
+            }
+            key={index}
+          >
+            <a
+              className={styles.link}
+              href={status.page.url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <span className={styles.indicator}></span>
+              <span className={styles.name}>
+                {status.status.indicator !== "none" ? (
+                  <strong>{status.page.name}</strong>
+                ) : (
+                  status.page.name
+                )}
+              </span>
+              <span className={styles.description}>
+                {status.status.description}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 export default function Home() {
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <Statuses />
     </main>
-  )
+  );
 }
