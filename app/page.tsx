@@ -40,6 +40,8 @@ const Statuses: React.FC = () => {
   const REFRESH_INTERVAL = 1000 * 60 * 5;
 
   const updateStatuses = () => {
+    setLoading(true);
+
     STATUS_URLS.statuspage.forEach((url) => {
       fetch(url + "/api/v2/status.json")
         .then((res) => res.json())
@@ -60,6 +62,7 @@ const Statuses: React.FC = () => {
         })
         .catch((err) => console.error(err));
     });
+
     setLoading(false);
   };
 
