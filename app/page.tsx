@@ -2,6 +2,7 @@
 
 import styles from "./page.module.css";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 const STATUS_URLS = {
@@ -51,12 +52,7 @@ const Statuses: React.FC = () => {
               ...prevStatuses,
               [result.page.name]: result,
             };
-            // TODO: move sorting to display below
-            /*
-            updatedStatuses.sort((a, b) =>
-              a.page.name.localeCompare(b.page.name)
-            );
-            */
+
             return updatedStatuses;
           });
         })
@@ -123,7 +119,14 @@ const Statuses: React.FC = () => {
 const GitHubLink: React.FC = () => {
   return (
     <div className={styles.github}>
-      <a href="https://github.com/ActionScripted/status-status">GitHub</a>
+      <a href="https://github.com/ActionScripted/status-status">
+        <Image
+          alt="GitHub"
+          src="https://github.githubassets.com/images/modules/site/icons/footer/github-mark.svg"
+          width="20"
+          height="20"
+        />
+      </a>
     </div>
   );
 };
