@@ -5,6 +5,10 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
+// Every 15 minutes
+const REFRESH_INTERVAL = 1000 * 60 * 15;
+
+// All statuspage for now.
 const STATUS_URLS = {
   statuspage: [
     "https://confluence.status.atlassian.com/",
@@ -35,46 +39,79 @@ interface StatusPage {
 }
 
 const Statuses: React.FC = () => {
-  const [statuses, setStatuses] = useState<{ [key: string]: StatusPage }>({});
+  const [countdown, setCountdown] = useState<number>(REFRESH_INTERVAL);
   const [loading, setLoading] = useState<boolean>(true);
+  const [statuses, setStatuses] = useState<{ [key: string]: StatusPage }>({});
 
-  const REFRESH_INTERVAL = 1000 * 60 * 5;
+  const updateStatuses = async () => {
+    setLoading(true); // Start loading as soon as we begin updating statuses
+    setStatuses({});
 
-  const updateStatuses = () => {
-    setLoading(true);
+    let fetchedStatuses: { [key: string]: StatusPage } = {};
 
-    STATUS_URLS.statuspage.forEach((url) => {
-      fetch(url + "/api/v2/status.json")
-        .then((res) => res.json())
-        .then((result) => {
-          setStatuses((prevStatuses) => {
-            const updatedStatuses = {
-              ...prevStatuses,
-              [result.page.name]: result,
-            };
+    // Wrap your fetch logic inside a function using async/await
+    const fetchStatus = async (url: string): Promise<void> => {
+      try {
+        const response = await fetch(url + "/api/v2/status.json");
+        const result = await response.json();
+        fetchedStatuses[result.page.name] = result;
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-            return updatedStatuses;
-          });
-        })
-        .catch((err) => console.error(err));
-    });
+    const promises = STATUS_URLS.statuspage.map((url) => fetchStatus(url));
 
-    setLoading(false);
+    // Wait for all promises (fetch operations) to complete
+    await Promise.all(promises);
+
+    setStatuses(fetchedStatuses);
+    setCountdown(REFRESH_INTERVAL);
+    setLoading(false); // Stop loading once all fetch operations are done and state is updated
   };
 
   useEffect(() => {
-    // Load once...
-    updateStatuses();
+    updateStatuses(); // Load once
 
-    // ...and then every so often.
-    setInterval(() => {
-      updateStatuses();
+    const statusInterval = setInterval(() => {
+      updateStatuses(); // ...and then every so often.
     }, REFRESH_INTERVAL);
-  }, [REFRESH_INTERVAL]);
+
+    return () => {
+      clearInterval(statusInterval); // Clean up the interval on component unmount
+    };
+  }, []);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      setCountdown(REFRESH_INTERVAL); // Reset countdown
+    } else {
+      const countdownInterval = setInterval(() => {
+        setCountdown(countdown - 1000);
+      }, 1000);
+
+      return () => {
+        clearInterval(countdownInterval); // Clean up the interval
+      };
+    }
+  }, [countdown]);
+
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.ceil(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div>
-      <h1>Status Check</h1>
+      <header>
+        <h1>Status Check</h1>
+        <p>
+          Next refresh: {formatTime(countdown)}&nbsp;&mdash;&nbsp;
+          <button onClick={updateStatuses}>Refresh Now</button>
+        </p>
+      </header>
       {loading && <p>Loading...</p>}
       <ul>
         {Object.keys(statuses)

@@ -2,9 +2,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  padding: 2rem;
   min-height: 100vh;
+  padding: 2rem;
 }
 
 .statuspage {
