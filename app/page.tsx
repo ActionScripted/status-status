@@ -34,7 +34,7 @@ interface StatusPage {
 }
 
 const Statuses: React.FC = () => {
-  const [statuses, setStatuses] = useState<StatusPage[]>([]);
+  const [statuses, setStatuses] = useState<{ [key: string]: StatusPage }>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   const REFRESH_INTERVAL = 1000 * 60 * 5;
@@ -45,11 +45,16 @@ const Statuses: React.FC = () => {
         .then((res) => res.json())
         .then((result) => {
           setStatuses((prevStatuses) => {
-            const updatedStatuses = [...prevStatuses, result];
+            const updatedStatuses = {
+              ...prevStatuses,
+              [result.page.name]: result,
+            };
+            // TODO: move sorting to display below
+            /*
             updatedStatuses.sort((a, b) =>
               a.page.name.localeCompare(b.page.name)
             );
-            console.log(updatedStatuses);
+            */
             return updatedStatuses;
           });
         })
@@ -73,35 +78,40 @@ const Statuses: React.FC = () => {
       <h1>Status Check</h1>
       {loading && <p>Loading...</p>}
       <ul>
-        {statuses.map((status, index) => (
-          <li
-            className={
-              styles.statuspage +
-              " " +
-              styles["status_" + status.status.indicator]
-            }
-            key={index}
-          >
-            <a
-              className={styles.link}
-              href={status.page.url}
-              rel="noreferrer"
-              target="_blank"
-            >
-              <span className={styles.indicator}></span>
-              <span className={styles.name}>
-                {status.status.indicator !== "none" ? (
-                  <strong>{status.page.name}</strong>
-                ) : (
-                  status.page.name
-                )}
-              </span>
-              <span className={styles.description}>
-                {status.status.description}
-              </span>
-            </a>
-          </li>
-        ))}
+        {Object.keys(statuses)
+          .sort((a, b) => a.localeCompare(b))
+          .map((key: string) => {
+            const status = statuses[key];
+            return (
+              <li
+                className={
+                  styles.statuspage +
+                  " " +
+                  styles["status_" + status.status.indicator]
+                }
+                key={key}
+              >
+                <a
+                  className={styles.link}
+                  href={status.page.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <span className={styles.indicator}></span>
+                  <span className={styles.name}>
+                    {status.status.indicator !== "none" ? (
+                      <strong>{status.page.name}</strong>
+                    ) : (
+                      status.page.name
+                    )}
+                  </span>
+                  <span className={styles.description}>
+                    {status.status.description}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
       </ul>
     </div>
   );
