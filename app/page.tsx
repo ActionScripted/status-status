@@ -35,8 +35,11 @@ interface StatusPage {
 
 const Statuses: React.FC = () => {
   const [statuses, setStatuses] = useState<StatusPage[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
+  const REFRESH_INTERVAL = 1000 * 60 * 5;
+
+  const updateStatuses = () => {
     STATUS_URLS.statuspage.forEach((url) => {
       fetch(url + "/api/v2/status.json")
         .then((res) => res.json())
@@ -52,11 +55,23 @@ const Statuses: React.FC = () => {
         })
         .catch((err) => console.error(err));
     });
-  }, []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    // Load once...
+    updateStatuses();
+
+    // ...and then every so often.
+    setInterval(() => {
+      updateStatuses();
+    }, REFRESH_INTERVAL);
+  }, [REFRESH_INTERVAL]);
 
   return (
     <div>
       <h1>Status Check</h1>
+      {loading && <p>Loading...</p>}
       <ul>
         {statuses.map((status, index) => (
           <li
@@ -92,10 +107,19 @@ const Statuses: React.FC = () => {
   );
 };
 
+const GitHubLink: React.FC = () => {
+  return (
+    <div className={styles.github}>
+      <a href="https://github.com/ActionScripted/status-status">GitHub</a>
+    </div>
+  );
+};
+
 export default function Home() {
   return (
     <main className={styles.main}>
       <Statuses />
+      <GitHubLink />
     </main>
   );
 }

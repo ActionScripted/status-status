@@ -18,6 +18,10 @@
   gap: 0.5em;
 }
 
+.statuspage .link:hover {
+  text-decoration: underline;
+}
+
 .statuspage .indicator {
   border-radius: 50%;
   display: inline-block;
